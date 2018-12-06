@@ -3,16 +3,23 @@ import * as dotenv from "dotenv";
 dotenv.config();
 
 const str = process.env.SERVICEBUS_CONNECTION_STRING || "";
-const path = process.env.QUEUE_NAME || "";
-console.log("str: ", str);
-console.log("path: ", path);
+const path = "ramya-session-queue";
+const numberOfMessages: number = 10;
 
 let ns: Namespace;
 async function main(): Promise<void> {
   ns = Namespace.createFromConnectionString(str);
+  const batchMsgs = [];
   const client = ns.createQueueClient(path);
-  await client.send({ body: "Hello sb world!!" + new Date().toString(), sessionId: "session-1" });
-  console.log("***********Created sender and sent the message...");
+  for (let i = 0; i < numberOfMessages; i++) {
+    await client.send({ body: `Hello sb world in session!! ${i + 1}`, sessionId: "session-1" });
+    console.log(">>>>>> Sent message number: %d", i + 1);
+
+    batchMsgs.push({ body: `Hello sb batch world in session!! ${i + 1}`, sessionId: "session-1" });
+  }
+
+  await client.sendBatch(batchMsgs);
+  console.log('Batch sent');
 }
 
 main().then(() => {
@@ -20,4 +27,5 @@ main().then(() => {
   return ns.close();
 }).catch((err) => {
   console.log("error: ", err);
+  return ns.close();
 });

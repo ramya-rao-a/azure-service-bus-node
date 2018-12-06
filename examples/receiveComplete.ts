@@ -4,23 +4,20 @@ dotenv.config();
 
 const str = process.env.SERVICEBUS_CONNECTION_STRING || "";
 const path = process.env.QUEUE_NAME || "";
-console.log("str: ", str);
-console.log("path: ", path);
 
 let ns: Namespace;
 async function main(): Promise<void> {
   ns = Namespace.createFromConnectionString(str);
   const client = ns.createQueueClient(path, { receiveMode: ReceiveMode.peekLock });
   const onMessage: OnMessage = async (brokeredMessage: ServiceBusMessage) => {
-    console.log(">>> Message: ", brokeredMessage);
-    console.log("### Actual message:", brokeredMessage.body ? brokeredMessage.body.toString() : undefined);
+    console.log(">>>>> Message Body:", brokeredMessage.body ? brokeredMessage.body.toString() : undefined);
     await brokeredMessage.complete();
   };
   const onError: OnError = (err: MessagingError | Error) => {
     console.log(">>>>> Error occurred: ", err);
   };
   const rcvHandler = client.receive(onMessage, onError, { autoComplete: false });
-  await delay(30000);
+  await delay(5000);
   await rcvHandler.stop();
 }
 
